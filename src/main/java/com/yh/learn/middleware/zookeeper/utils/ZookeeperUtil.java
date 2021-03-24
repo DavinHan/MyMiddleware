@@ -34,10 +34,26 @@ public class ZookeeperUtil {
      * @param data
      * @return
      */
-    public String createNode(String path, String data) {
+    public String createPersistentNode(String path, String data) {
         String b = null;
         try {
             b = zooKeeper.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } catch (KeeperException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return b;
+    }
+
+    /**
+     * 类似Java中的AQS(AbstractQueuedSynchronizer)，先加锁先处理先释放，后加锁则等待
+     * @param path
+     * @param data
+     * @return
+     */
+    public String createEphemeralSequentialNode(String path, String data) {
+        String b = null;
+        try {
+            b = zooKeeper.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
         } catch (KeeperException | InterruptedException e) {
             log.error(e.getMessage(), e);
         }
