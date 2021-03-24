@@ -61,6 +61,14 @@ public class ZookeeperUtil {
         return stat;
     }
 
+    public void deleteNode(String path, int version) {
+        try {
+            zooKeeper.delete(path, version);
+        } catch (KeeperException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
     public List<String> getChildren(String path) {
         List<String> children = null;
         try {
