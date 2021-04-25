@@ -3,8 +3,7 @@ package com.yh.learn.middleware.curator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.cache.NodeCache;
-import org.apache.curator.framework.recipes.cache.NodeCacheListener;
+import org.apache.curator.framework.recipes.cache.*;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
@@ -64,6 +63,64 @@ public class CuratorTest {
             Thread.sleep(10000);
         } catch (Exception e) {
             log.error("error => {}", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testZKPathChildrenCache(){
+        String path = "/zk-book";
+        client.start();
+        PathChildrenCache cache = new PathChildrenCache(client, path, true);
+
+        try {
+            cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
+            cache.getListenable().addListener(new PathChildrenCacheListener() {
+                @Override
+                public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
+                    switch (pathChildrenCacheEvent.getType()) {
+                        case CHILD_ADDED:
+                            log.info(">>>> child add {}", pathChildrenCacheEvent.getData().getPath());
+                            break;
+                        case CHILD_UPDATED:
+                            log.info(">>>>>> child update {}", pathChildrenCacheEvent.getData().getPath());
+                            break;
+                        case CHILD_REMOVED:
+                            log.info(">>>>>> child remove {}", pathChildrenCacheEvent.getData().getPath());
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+
+            client.delete().forPath(path + "/c3");
+            Thread.sleep(1000);
+
+            client.delete().forPath(path + "/c2");
+            Thread.sleep(1000);
+
+            client.delete().forPath(path + "/c1");
+            Thread.sleep(1000);
+
+            client.create().withMode(CreateMode.PERSISTENT).forPath(path + "/c1");
+            Thread.sleep(1000);
+
+            client.create().withMode(CreateMode.PERSISTENT).forPath(path + "/c2");
+            Thread.sleep(2000);
+
+            client.create().withMode(CreateMode.PERSISTENT).forPath(path + "/c3");
+            Thread.sleep(3000);
+
+            client.delete().forPath(path + "/c1");
+            Thread.sleep(1000);
+
+            client.delete().forPath(path + "/c2");
+            Thread.sleep(1000);
+
+            client.delete().forPath(path + "/c3");
+            Thread.sleep(Integer.MAX_VALUE);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
