@@ -71,10 +71,25 @@ public class CuratorTest {
         String path = "/zk-book";
         client.start();
         PathChildrenCache cache = new PathChildrenCache(client, path, true);
-
         try {
             cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
-            cache.getListenable().addListener(new PathChildrenCacheListener() {
+            cache.getListenable().addListener((curator, event) ->{
+                switch (event.getType()) {
+                    case CHILD_ADDED:
+                        log.info(">>>> child add {}", event.getData().getPath());
+                        break;
+                    case CHILD_UPDATED:
+                        log.info(">>>>>> child update {}", event.getData().getPath());
+                        break;
+                    case CHILD_REMOVED:
+                        log.info(">>>>>> child remove {}", event.getData().getPath());
+                        break;
+                    default:
+                        break;
+                }
+            });
+
+            /*cache.getListenable().addListener(new PathChildrenCacheListener() {
                 @Override
                 public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
                     switch (pathChildrenCacheEvent.getType()) {
@@ -91,7 +106,7 @@ public class CuratorTest {
                             break;
                     }
                 }
-            });
+            });*/
 
             client.delete().forPath(path + "/c3");
             Thread.sleep(1000);
